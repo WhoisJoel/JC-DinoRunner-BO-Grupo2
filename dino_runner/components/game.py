@@ -1,9 +1,10 @@
 import pygame
 
 from dino_runner.components.obstacles.obstacle_manager import ObstacleManager
-from dino_runner.utils.constants import BG, ICON, SCREEN_HEIGHT, SCREEN_WIDTH, TITLE, FPS
+from dino_runner.utils.constants import BG, ICON, SCREEN_HEIGHT, SCREEN_WIDTH, TITLE, FPS, WHITE_COLOR
 from dino_runner.components.dinosaurius import Dinosaurius
-
+from dino_runner.components.player_lives.player_heart_manager import PlayerHeartManager
+from dino_runner.components import text_utils
 
 class Game:
     def __init__(self):
@@ -14,10 +15,13 @@ class Game:
         self.clock = pygame.time.Clock()
         self.dino = Dinosaurius()
         self.obstacle_manager = ObstacleManager()
+        self.player_heart_manager = PlayerHeartManager()
         self.playing = False
         self.game_speed = 20
         self.x_pos_bg = 0
         self.y_pos_bg = 380
+        self.points = 0
+        self.death_count = 0
 
     def run(self):
         # Game loop: events - update - draw
@@ -39,13 +43,38 @@ class Game:
         self.obstacle_manager.update(self)
 
     def draw(self):
-        self.clock.tick(FPS)
         self.screen.fill((255, 255, 255))
+        self.score()
+        self.clock.tick(FPS)
         self.draw_background()
         self.dino.draw(self.screen)
         self.obstacle_manager.draw(self.screen)
+        self.player_heart_manager.draw(self.screen)
         pygame.display.update()
         pygame.display.flip()
+
+    def show_menu(self):
+        self.screen.fill(WHITE_COLOR)
+
+    def print_menu_elements(self):
+        if self.death_count == 0:
+            text, text_rect = text_utils.get_centered_message("Press any key to continue")
+            self.screen.blit(text, text_rect)
+        elif self.death_count > 0:
+            text, text_rect = text_utils.get_centered_message("Press any key to continue")
+            score, score_text = text_utils.get_centered_message("Your score is: " + str(self.points), height-half_screen_height + 50)
+            death, death_rect = text_utils.get_centered_message("Your deaths is: " + str(self.points), height-half_screen_height + 100)
+            self.screen.blit(score, score_text)
+            self.screen.blit(text, text_rect)
+            death.screen.blit(death, death_rect)
+    def score(self):
+        self.points += 1
+
+        if self.points % 100 == 0:
+            self.game_speed += 1
+
+        text, text_rect = text_utils.get_score_element
+
 
     def draw_background(self):
         image_width = BG.get_width()
