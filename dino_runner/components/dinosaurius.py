@@ -1,18 +1,18 @@
 import pygame
 
 from pygame.sprite import Sprite
-from dino_runner.utils.constants import RUNNING, DEFAULT_TYPE, DUCKING, JUMPING
+from dino_runner.utils.constants import RUNNING, DEFAULT_TYPE, DUCKING, JUMPING, SHIELD_TYPE, DUCKING_SHIELD, JUMPING_SHIELD, RUNNING_SHIELD 
 
 class Dinosaurius(Sprite):
     X_POS = 80
     Y_POS = 300
     JUMP_VEL = 8.5
     def __init__(self):
-        self.dino_run = {DEFAULT_TYPE: RUNNING}
-        self.dino_duck = {DEFAULT_TYPE: DUCKING}
-        self.dino_jump = {DEFAULT_TYPE: JUMPING}
+        self.run_img = {DEFAULT_TYPE: RUNNING, SHIELD_TYPE: RUNNING_SHIELD}
+        self.duck_img = {DEFAULT_TYPE: DUCKING, SHIELD_TYPE: DUCKING_SHIELD}
+        self.jump_img = {DEFAULT_TYPE: JUMPING, SHIELD_TYPE: JUMPING_SHIELD}
 
-        self.image = self.dino_run[DEFAULT_TYPE][0]
+        self.image = self.run_img[DEFAULT_TYPE][0]
         self.dino_rect = self.image.get_rect()
         self.dino_rect.x = self.X_POS
         self.dino_rect.y = self.Y_POS
@@ -21,7 +21,18 @@ class Dinosaurius(Sprite):
         self.running = True
         self.ducking = False
         self.jumping = False
+        self.jump_sound = pygame.mixer.Sound('jumpDino.wav')
+
         self.has_lives = True
+
+        self.setup_state_booleans()
+
+    def setup_state_booleans(self):
+        self.has_powerup = False
+        self.shield = False
+        self.show_text = False
+        self.shield_time_up = 0
+
     
     def update(self, input_user):
         if self.running:
@@ -50,14 +61,14 @@ class Dinosaurius(Sprite):
             self.steps = 0
 
     def run(self):
-        self.image = self.dino_run[DEFAULT_TYPE][0] if self.steps <=5 else self.dino_run[DEFAULT_TYPE][1]
+        self.image = self.run_img[DEFAULT_TYPE][0] if self.steps <=5 else self.run_img[DEFAULT_TYPE][1]
         self.dino_rect = self.image.get_rect()
         self.dino_rect.x = self.X_POS
         self.dino_rect.y = self.Y_POS
         self.steps += 1
 
     def duck(self):
-        self.image = self.dino_duck[DEFAULT_TYPE][0] if self.steps <=5 else self.dino_duck[DEFAULT_TYPE][1]
+        self.image = self.duck_img[DEFAULT_TYPE][0] if self.steps <=5 else self.duck_img[DEFAULT_TYPE][1]
         self.dino_rect = self.image.get_rect()
         self.dino_rect.x = self.X_POS
         self.dino_rect.y = self.Y_POS + 35
@@ -66,6 +77,7 @@ class Dinosaurius(Sprite):
     def jump(self):
         self.image = JUMPING
         if self.jumping:
+            # pygame.mixer.Sound.play(self.jump_sound)
             self.dino_rect.y -= self.jump_vel * 4
             self.jump_vel -= 0.8
         if self.jump_vel < -self.JUMP_VEL:
@@ -77,5 +89,20 @@ class Dinosaurius(Sprite):
     def draw(self, screen):
         screen.blit(self.image, (self.dino_rect.x, self.dino_rect.y))
 
+    def check_visibility(self, screen):
+        if self.shield:
+            time_to_show = round( (self.shield_time_up - pygame.time.get_ticks()) / 1000,2)
+            if (time_to_show >= 0):
+                font = pygame.font.Font('freesansbold.ttf', 18)
+                text = font.render(f'shield enable for {time_to_show}', True, (0, 0, 0))
+                textRect = text.get_rect()
+                textRect.center = (500, 40)
+                screen.blit(text, textRect)
+            else:
+                self.shield = False
+                self.update_to_default(SHIELD_TYPE)
 
+    def update_to_default(self, curren_type):
+        if self.type == curren_type:
+            self.type = DEFAULT_TYPE
     
