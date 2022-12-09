@@ -1,5 +1,4 @@
 import pygame
-import math
 
 from pygame.sprite import Sprite
 from dino_runner.utils.constants import RUNNING, DEFAULT_TYPE, DUCKING, JUMPING
@@ -7,7 +6,7 @@ from dino_runner.utils.constants import RUNNING, DEFAULT_TYPE, DUCKING, JUMPING
 class Dinosaurius(Sprite):
     X_POS = 80
     Y_POS = 300
-    JUMP_VEL = 8
+    JUMP_VEL = 8.5
     def __init__(self):
         self.dino_run = {DEFAULT_TYPE: RUNNING}
         self.dino_duck = {DEFAULT_TYPE: DUCKING}
@@ -22,6 +21,7 @@ class Dinosaurius(Sprite):
         self.running = True
         self.ducking = False
         self.jumping = False
+        self.has_lives = True
     
     def update(self, input_user):
         if self.running:
@@ -41,7 +41,7 @@ class Dinosaurius(Sprite):
             self.jumping = True
             self.running = False
             self.ducking = False
-        elif not (self.jumping or input_user[pygame.K_DOWN]):
+        elif not self.jumping:
             self.running = True
             self.ducking = False
             self.jumping = False
@@ -64,14 +64,14 @@ class Dinosaurius(Sprite):
         self.steps += 1
 
     def jump(self):
-        self.image = self.dino_jump[self.type]
         self.image = JUMPING
         if self.jumping:
             self.dino_rect.y -= self.jump_vel * 4
             self.jump_vel -= 0.8
-            
-        
-        
+        if self.jump_vel < -self.JUMP_VEL:
+            self.dino_rect.y = self.Y_POS
+            self.jumping = False
+            self.jump_vel = self.JUMP_VEL
             
 
     def draw(self, screen):
